@@ -7,43 +7,43 @@
 ; +------+
 ; | Main |
 ; +------+
-#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
-#Warn ; Enable warnings to assist with detecting common errors. To use only in debug
-SendMode Input ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir% ; Ensures a consistent starting directory.
-#Persistent ; only one copy running allowed
+	#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
+	#Warn ; Enable warnings to assist with detecting common errors. To use only in debug
+	SendMode Input ; Recommended for new scripts due to its superior speed and reliability.
+	SetWorkingDir %A_ScriptDir% ; Ensures a consistent starting directory.
+	#Persistent ; only one copy running allowed
 
     ; config
-gosub, F2L_Config
+	gosub, F2L_Config
 
 	; set up icon
-Menu, Tray, Icon, FlDigi2Log4OM.ico
+	Menu, Tray, Icon, FlDigi2Log4OM.ico
 
 	; splash
-SplashTextOn, 200, 50, FlDigi -> Log4OM © IZ3XNJ, FlDigi -> Log4OM v1.0.0 %yourCall%
-Sleep, 2000
-SplashTextOff
+	SplashTextOn, 200, 50, FlDigi -> Log4OM © IZ3XNJ, FlDigi -> Log4OM v1.0.0 %yourCall%
+	Sleep, 2000
+	SplashTextOff
 
 	; TrayTip
-TrayTip, FlDigi-> Log4OM, FlDigi -> Log4OM © IZ3XNJ, 10, 17
+	TrayTip, FlDigi-> Log4OM, FlDigi -> Log4OM © IZ3XNJ, 10, 17
 
 	; setup
-gosub, F2L_Setup
+	gosub, F2L_Setup
 
-if !F2L_IsAppRunning(true)
-	ExitApp
-else
-{
+	if !F2L_IsAppRunning(true)
+		ExitApp
+	else
+	{
 		; start
-	gosub, F2L_setupComm
-	
+		gosub, F2L_setupComm
+		
 		; events
-	OnClipboardChange("F2L_ClipChanged")
-	OnExit, F2L_End
-	
+		OnClipboardChange("F2L_ClipChanged")
+		OnExit, F2L_End
+		
 		; timer
-	SetTimer, F2L_CtrlApps, 5000
-}
+		SetTimer, F2L_CtrlApps, 5000
+	}
 return
 
 ; +-----------+
@@ -51,20 +51,20 @@ return
 ; +-----------+
 F2L_Setup:
 	; forced windows activation
-#WinActivateForce 
+	#WinActivateForce 
 	; the window's title must start with the specified WinTitle to be a match
-SetTitleMatchMode, 1
+	SetTitleMatchMode, 1
 	; invisible windows are "seen" by the script
-DetectHiddenWindows, On 
+	DetectHiddenWindows, On 
 
 	; setup control's name
-lblLog4OM = Log4OM [User Profile:
-lblCommunicator = Log4OM Communicator
-lblFldigi = fldigi ver
-ctrlCall = WindowsForms10.EDIT.app.0.1b0ed41_r12_ad13
-ctrlOutbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad13
-ctrlInbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad13
-ctrlTab = WindowsForms10.SysTabControl32.app.0.1b0ed41_r12_ad12
+	lblLog4OM = Log4OM [User Profile:
+	lblCommunicator = Log4OM Communicator
+	lblFldigi = fldigi ver
+	ctrlCall = WindowsForms10.EDIT.app.0.1b0ed41_r12_ad13
+	ctrlOutbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad13
+	ctrlInbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad13
+	ctrlTab = WindowsForms10.SysTabControl32.app.0.1b0ed41_r12_ad12
 return
 
 ; +------------+
@@ -73,7 +73,7 @@ return
 F2L_Config:
 	; read from FlDigi2Log4OM.ini
 	; yourCall
-IniRead, yourCall, FlDigi2Log4OM.ini, config, yourCall, NOCALL
+	IniRead, yourCall, FlDigi2Log4OM.ini, config, yourCall, NOCALL
 return
 
 ; +---------------+
@@ -82,14 +82,14 @@ return
 F2L_setupComm:
 	; setup Log4oM communicator
 	; bring it to front
-WinActivate, %lblCommunicator%
+	WinActivate, %lblCommunicator%
 
 	; click Inbound & outbound buttons
-ControlClick, %ctrlOutbound%, %lblCommunicator%
-ControlClick, %ctrlInbound%, %lblCommunicator%
+	ControlClick, %ctrlOutbound%, %lblCommunicator%
+	ControlClick, %ctrlInbound%, %lblCommunicator%
 
 	; minimize Log4oM communicator
-WinMinimize, %lblCommunicator%
+	WinMinimize, %lblCommunicator%
 return
 
 ; +---------+
@@ -97,8 +97,8 @@ return
 ; +---------+
 F2L_End:
 	; delete timer
-SetTimer, F2L_CtrlApps, Delete 
-ExitApp
+	SetTimer, F2L_CtrlApps, Delete 
+	ExitApp
 return
 
 ; +--------------+
@@ -115,26 +115,32 @@ return
 F2L_IsAppRunning(bMsg)
 {
 	global
-	local rc := true
+	
+	; suspend timer
+	SetTimer, F2L_CtrlApps, Off 
 	
 	; check if needed Apps are running
 	
 	; check if FlDigi is running
 	IfWinNotExist, %lblFldigi%
 	{
-		rc := false
 		if (bMsg)
 			MsgBox, 16, FlDigi -> Log4OM © IZ3XNJ, FlDigi not running
+		return false
 	}
 	else
 		; check Log4OM running
 		IfWinNotExist, Log4OM Communicator
 		{
-			rc := false
 			if (bMsg)
 				MsgBox, 16, FlDigi -> Log4OM © IZ3XNJ, Log4OM not running
+			return false
 		}	
-	return rc
+		
+	; restart timer
+	SetTimer, F2L_CtrlApps, On 
+
+	return true
 }
 
 ; +-----------------;
@@ -144,6 +150,9 @@ F2L_ClipChanged(Type)
 {
 	global 
 	local callsign
+
+	; suspend timer
+	SetTimer, F2L_CtrlApps, Off 
 	
 	; this event raise up when clipoard changes
 	;  type = 1  means clipboard contains something that can be expressed as text 
@@ -180,6 +189,10 @@ F2L_ClipChanged(Type)
 			ControlSend, %ctrlTab%, {F7}, %lblLog4OM%  
 		}
 	}
+	
+	; restart timer
+	SetTimer, F2L_CtrlApps, On 
+
 	return
 }
 
@@ -188,22 +201,21 @@ F2L_ClipChanged(Type)
 ; +----------------+
 F2L_isCallsign(call)
 {
-	global
-	local rc := true
-	
+	global yourCall
+
 	; check if the text in clipboard could be a callsign
 	
 	; if the clipboard contains tabs or spaces, is not a callsign
 	if call contains  %A_Space%, %A_Tab%
-		rc := false
+		return false
 	
 	; if it is too long or too short, is not a callsign
-	if (rc and (StrLen(call) > 13 or StrLen(call) < 3)) 
-		rc := false
+	if (StrLen(call) > 13 or StrLen(call) < 3)
+		return false
 	
 	; if it is your call, I doubt you are doing a QSO with yourself
-	if (rc and call == yourCall)
-		rc := false
+	if (call == yourCall)
+		return false
 	
-	return
+	return true
 }
