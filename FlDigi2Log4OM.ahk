@@ -1,6 +1,6 @@
 ; *****************
 ; * FlDigi2Log4OM *
-; * v3.0.0        *
+; * v3.0.1        *
 ; * © IZ3XNJ      *
 ; *****************
 
@@ -14,12 +14,12 @@
 	SetWorkingDir %A_ScriptDir% ; Ensures a consistent starting directory.
 	#Persistent ; only one copy running allowed
 	
-	version := "3.0.0"
+	version := "3.0.1"
     
 	; splash
-	SplashTextOn, 200, 50, FlDigi -> Log4OM © IZ3XNJ, FlDigi -> Log4OM`nv%version%
+	Gosub, about
 	
-	Sleep, 2000
+	Sleep, 3000
 	SplashTextOff
 
 	; setup tray menu
@@ -45,6 +45,7 @@
 	
 return
 
+
 ; +-----------+
 ; | F2L_Setup |
 ; +-----------+
@@ -57,6 +58,14 @@ F2L_Setup:
 	; invisible windows are "seen" by the script
 	DetectHiddenWindows, On 
 
+	flgTrayTip := 0
+	for n, param in A_Args  ; For each parameter:
+	{
+		StringUpper, param, param
+		if (param = "-TrayTip")
+			flgTrayTip := 1
+	}
+	
 	; setup control's name
 	lblLog4OM = Log4OM [User Profile:
 	lblCommunicator = Log4OM Communicator
@@ -118,8 +127,8 @@ return
 ; +--------------+
 F2L_CtrlApps:
 
-if !F2L_IsAppRunning(false)
-	goto F2L_End
+	if !F2L_IsAppRunning(false)
+		goto F2L_End
 
 return
 
@@ -155,8 +164,7 @@ F2L_IsAppRunning(bMsg)
 	; restart timer
 	SetTimer, F2L_CtrlApps, On 
 
-	return true
-	
+	return true	
 }
 
 ; +-----------------;
@@ -192,8 +200,8 @@ F2L_ClipChanged(Type)
 			; only if different
 			if (prevCall != callsign)
 			{	
-				; tray
-				TrayTip, FlDigi -> Log4OM, %callsign%, 40, 17
+				if (flgTrayTip = 1)
+					TrayTip, FlDigi -> Log4OM, %callsign%, 40, 17
 				
 				; click CLR button to clear previous call
 				ControlClick, CLR, %lblLog4OM% 
@@ -288,13 +296,13 @@ Control_GetClassNN(hWnd, hCtrl)
 ; +---------------+
 SetupTrayMenu:
 
-	; TrayTip
-	TrayTip, FlDigi-> Log4OM, FlDigi -> Log4OM © IZ3XNJ, 10, 17
+	if (flgTrayTip = 1)
+		TrayTip, FlDigi-> Log4OM, FlDigi -> Log4OM © IZ3XNJ, 10, 17
 
 	; set tray Icon  & menues
 	Menu, Tray, Icon, FlDigi2Log4OM.ico
 	menu, Tray, NoStandard
-	
+	Menu, Tray, Add, Config, F2L_Config
 	Menu, Tray, Add, About..., about
 	Menu, Tray, Add, Exit, F2L_End
 	
@@ -306,8 +314,8 @@ return
 about:
 
 	; splash
-	SplashTextOn, 200, 50, FlDigi -> Log4OM © IZ3XNJ, digiLog4OM`nv%version% %yourCall% - %mode%
-	Sleep, 2000
+	SplashTextOn, 200, 75, FlDigi -> Log4OM © IZ3XNJ, digiLog4OM`nAutomatic callsign`nfrom FlDigi to Log4OM`nv%version%
+	Sleep, 3000
 	SplashTextOff
 	
 return
